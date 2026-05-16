@@ -1,4 +1,22 @@
 package objectville.cells;
 
-public class UtilityProvider {
+import objectville.enums.UtilityType;
+import objectville.interfaces.Connectable;
+import objectville.simulation.Position;
+
+public abstract class UtilityProvider extends Cell implements Connectable {
+
+    public static final int CAPACITY = 100;
+
+    public UtilityProvider(Position position) {
+        // TODO: implement
+        super(position);
+    }
+
+    public abstract UtilityType getUtilityType();
+
+    public int getCapacity() {
+        // TODO: implement
+        return CAPACITY;
+    }
 }
