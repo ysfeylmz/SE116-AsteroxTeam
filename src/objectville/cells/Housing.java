@@ -6,11 +6,11 @@ import objectville.interfaces.ResourceConsumer;
 import objectville.interfaces.ResourceProducer;
 import objectville.simulation.Position;
 
-public class Industrial extends Zone implements ResourceProducer, ResourceConsumer {
+public class Housing extends Zone implements ResourceProducer, ResourceConsumer {
 
-    private int populationReceived;
+    private int lifestyleReceived;
 
-    public Industrial(Position position) {
+    public Housing(Position position) {
         // TODO: implement
         super(position);
     }
@@ -18,7 +18,7 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
     @Override
     public char getSymbol() {
         // TODO: implement
-        return 'I';
+        return 'H';
     }
 
     @Override
