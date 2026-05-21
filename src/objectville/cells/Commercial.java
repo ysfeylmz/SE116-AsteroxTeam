@@ -61,8 +61,27 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int produce(ResourceType type) {
-        // TODO: implement
-        return 0;
+        if(type != ResourceType.LIFESTYLE){
+
+            return 0; // eğer kaynak lifestyle değilse üretme 0 dondur.
+
+        }
+        if(this.level ==0){
+            return 0;
+
+        }
+
+        int electricity = getUtilityReceived(UtilityType.ELECTRICITY);
+        int water = getUtilityReceived(UtilityType.WATER);
+        int internet = getUtilityReceived(UtilityType.INTERNET);
+        //kaynakları int atadım.
+
+        int m = Math.min(electricity, Math.min(water, internet));
+        //min değeri bulma.
+
+        return this.level * m;
+
+
     }
 
     @Override
