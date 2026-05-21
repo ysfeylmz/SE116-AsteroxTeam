@@ -55,8 +55,18 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int getUtilityDemand(UtilityType type) {
-        // TODO: implement
-        return 0;
+        if(type == UtilityType.ELECTRICITY || type == UtilityType.WATER || type ==UtilityType.INTERNET){
+
+            int lifestyleProduced = produce(ResourceType.LIFESTYLE); //mevcut olan uretımı ogrenme
+
+            if(lifestyleProduced <= 0){
+                return 1;
+            }else{
+
+                return lifestyleProduced;
+            }
+        }
+        return 0; //istenmeyen altyapılar ıcın 0 dondrrcek
     }
 
     @Override
@@ -86,8 +96,17 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int demand(ResourceType type) {
-        // TODO: implement
-        return 0;
+
+        if(type == ResourceType.POPULATION || type== ResourceType.GOODS){
+            if(this.level == 0){
+                return 1; //level 0 bile olsa gelısebılmesı ıcın 1 ister.
+            }
+            else{
+                return this.level; //0 değilsekendı sevıyesını donpdur
+            }
+
+        }
+        return 0; // commercial sadece populatıon ve goods istediği ıcın farklı cıkarsa 0 dondurecek.
     }
 
     @Override
