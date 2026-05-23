@@ -4,6 +4,7 @@ import objectville.enums.UtilityType;
 import objectville.interfaces.Connectable;
 import objectville.simulation.Position;
 import java.util.Map;
+import java.util.HashMap;
 public abstract class Zone extends Cell implements Connectable {
 
     protected int level;
@@ -11,39 +12,48 @@ public abstract class Zone extends Cell implements Connectable {
     protected Map<ServiceType, Boolean> servicesReceived;
 
     public Zone(Position position) {
-        // TODO:
         super(position);
+        this.level = 0;
+        this.utilitiesReceived = new HashMap<>();
+        this.servicesReceived = new HashMap<>();
+
+        resetTickInputs();
     }
 
     public int getLevel() {
-        // TODO:
-        return 0;
+        return level;
     }
 
     public void setLevel(int level) {
-        // TODO:
+        if (level >= 0 && level <= 3) {
+            this.level = level;
+        }
     }
 
     public void resetTickInputs() {
-        // TODO:
+        for (UtilityType u : UtilityType.values()) {
+            utilitiesReceived.put(u, 0);
+        }
+        for (ServiceType s : ServiceType.values()) {
+            servicesReceived.put(s, false);
+        }
     }
 
     public void receiveUtility(UtilityType type, int amount) {
-        // TODO:
+        int current = utilitiesReceived.getOrDefault(type, 0);
+        utilitiesReceived.put(type, current + amount);
     }
 
     public void receiveService(ServiceType type) {
-        // TODO:
+        servicesReceived.put(type, true);
     }
 
     public int getUtilityReceived(UtilityType type) {
-        // TODO:
-        return 0;
+        return utilitiesReceived.getOrDefault(type, 0);
     }
 
     public boolean hasService(ServiceType type) {
-        // TODO:
-        return false;
+        return servicesReceived.getOrDefault(type, false);
     }
 
     public abstract void recomputeLevel();
