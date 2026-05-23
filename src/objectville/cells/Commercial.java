@@ -1,19 +1,23 @@
 package objectville.cells;
 
 import objectville.enums.ResourceType;
+import objectville.enums.ServiceType;
 import objectville.enums.UtilityType;
 import objectville.interfaces.ResourceConsumer;
 import objectville.interfaces.ResourceProducer;
 import objectville.simulation.Position;
-import objectville.enums.ServiceType;
 
 public class Commercial extends Zone implements ResourceProducer, ResourceConsumer {
 
     private int populationReceived;
     private int goodsReceived;
+    private int lastOutput;
 
     public Commercial(Position position) {
         super(position);
+        this.populationReceived = 0;
+        this.goodsReceived = 0;
+        this.lastOutput = 0;
     }
 
     @Override
@@ -23,101 +27,91 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public void recomputeLevel() {
-        boolean hasElectricity = getUtilityReceived(UtilityType.ELECTRICITY) >0;
-        boolean hasWater = getUtilityReceived(UtilityType.WATER) >0;
-        boolean hasInternet= getUtilityReceived(UtilityType.INTERNET) >0;
-        boolean hasPopulation = this.populationReceived > 0;
-        boolean hasGoods  =this.goodsReceived >0;
-        //depolardaki kaynakları kontrol ettim
+        int m = Math.min(getUtilityReceived(UtilityType.ELECTRICITY),
+                Math.min(getUtilityReceived(UtilityType.WATER), getUtilityReceived(UtilityType.INTERNET)));
 
-        if (!hasElectricity || !hasWater || !hasInternet || !hasPopulation || !hasGoods){
-
-            this.level = 0;
+        if (m == 0) {
+            setLevel(0);
             return;
-            //bu 5'inden biri bile yoksa bina level 0 olur bu yuzden ileriye bakmaya gerek yok.
-
         }
 
-        this.level = 1; //if bloguna girmezse herşey var ve level 1.
+        boolean hasSecurity = hasService(ServiceType.SECURITY);
+        boolean hasResources = populationReceived > 0 && goodsReceived > 0;
 
-        if(hasService(ServiceType.SECURITY)){
-            this.level = 2; //güvenlik varsa eğer 2.level.
-
-            if(this.populationReceived >1 && this.goodsReceived > 1) {
-                this.level =3; //daha fazla varsa level 3.
+        if (level == 0) {
+            if (hasResources) {
+                setLevel(1);
             }
-
-
         }
-
-
+        else if (level == 1) {
+            if (!hasResources) {
+                setLevel(0);
+            } else if (hasSecurity) {
+                setLevel(2);
+            }
+        }
+        else if (level == 2) {
+            if (!hasSecurity || !hasResources) {
+                setLevel(1);
+            } else if (hasResources) {
+                setLevel(3);
+            }
+        }
+        else if (level == 3) {
+            if (!hasSecurity || !hasResources) {
+                setLevel(2);
+            }
+        }
     }
 
     @Override
     public int getUtilityDemand(UtilityType type) {
-        if(type == UtilityType.ELECTRICITY || type == UtilityType.WATER || type ==UtilityType.INTERNET){
-
-            int lifestyleProduced = produce(ResourceType.LIFESTYLE); //mevcut olan uretımı ogrenme
-
-            if(lifestyleProduced <= 0){
-                return 1;
-            }else{
-
-                return lifestyleProduced;
-            }
-        }
-        return 0; //istenmeyen altyapılar ıcın 0 dondrrcek
+        return Math.max(1, lastOutput);
     }
 
     @Override
     public int produce(ResourceType type) {
-        if(type != ResourceType.LIFESTYLE){
-
-            return 0; // eğer kaynak lifestyle değilse üretme 0 dondur.
-
-        }
-        if(this.level ==0){
+        if (type != ResourceType.LIFESTYLE) {
             return 0;
-
         }
 
-        int electricity = getUtilityReceived(UtilityType.ELECTRICITY);
-        int water = getUtilityReceived(UtilityType.WATER);
-        int internet = getUtilityReceived(UtilityType.INTERNET);
-        //kaynakları int atadım.
+        int m = Math.min(getUtilityReceived(UtilityType.ELECTRICITY),
+                Math.min(getUtilityReceived(UtilityType.WATER), getUtilityReceived(UtilityType.INTERNET)));
 
-        int m = Math.min(electricity, Math.min(water, internet));
-        //min değeri bulma.
+        int output = 0;
 
-        return this.level * m;
+        if (level == 0) {
+            output = 0;
+        } else if (level == 1) {
+            output = m;
+        } else if (level == 2) {
+            output = 2 * m;
+        } else if (level == 3) {
+            output = (2 * m) + Math.min(populationReceived, goodsReceived);
+        }
 
-
+        this.lastOutput = output;
+        return output;
     }
 
     @Override
     public int demand(ResourceType type) {
-
-        if(type == ResourceType.POPULATION || type== ResourceType.GOODS){
-            if(this.level == 0){
-                return 1; //level 0 bile olsa gelısebılmesı ıcın 1 ister.
-            }
-            else{
-                return this.level; //0 değilsekendı sevıyesını donpdur
-            }
-
-        }
-        return 0; // commercial sadece populatıon ve goods istediği ıcın farklı cıkarsa 0 dondurecek.
+        return 0;
     }
 
     @Override
     public void receive(ResourceType type, int amount) {
-        if(type == ResourceType.POPULATION){
-            this.populationReceived = populationReceived + amount;
+        if (type == ResourceType.POPULATION) {
+            this.populationReceived += amount;
+        } else if (type == ResourceType.GOODS) {
+            this.goodsReceived += amount;
+        }
+    }
 
-        } //Nüfüs verirse nüfusu ekle.
-
-        else if(type == ResourceType.GOODS){
-            this.goodsReceived = goodsReceived + amount;
-        } //Ürün verirse onu ekle.
+    @Override
+    public void resetTickInputs() {
+        super.resetTickInputs();
+        this.populationReceived = 0;
+        this.goodsReceived = 0;
     }
 }
