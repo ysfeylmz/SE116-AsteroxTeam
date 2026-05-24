@@ -32,6 +32,7 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
         if (m == 0) {
             setLevel(0);
+            lastOutput = 0;
             return;
         }
 
@@ -53,12 +54,12 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
         else if (level == 2) {
             if (!hasSecurity || !hasResources) {
                 setLevel(1);
-            } else if (hasResources) {
+            } else if (populationReceived > 1 && goodsReceived > 1) {
                 setLevel(3);
             }
         }
         else if (level == 3) {
-            if (!hasSecurity || !hasResources) {
+            if (!hasSecurity || !(populationReceived > 1 && goodsReceived > 1)) {
                 setLevel(2);
             }
         }
@@ -96,6 +97,10 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int demand(ResourceType type) {
+
+        if (type == ResourceType.POPULATION || type == ResourceType.GOODS) {
+            return 1;
+        }
         return 0;
     }
 
