@@ -10,24 +10,30 @@ public class ResourcePool {
     private final Map<ResourceType, Integer> totals = new EnumMap<>(ResourceType.class);
 
     public ResourcePool() {
-        // TODO: implement
+        clear();
     }
 
     public void add(ResourceType type, int amount) {
-        // TODO: implement
+        if (type == null || amount <= 0) {
+            return;
+        }
+        totals.put(type, totals.getOrDefault(type, 0) + amount);
     }
 
     public int get(ResourceType type) {
-        // TODO: implement
-        return 0;
+        return totals.getOrDefault(type, 0);
     }
 
     public void clear() {
-        // TODO: implement
+        for (ResourceType type : ResourceType.values()) {
+            totals.put(type, 0);
+        }
     }
 
     public int sharePerConsumer(ResourceType type, int numConsumers) {
-        // TODO: implement
-        return 0;
+        if (numConsumers <= 0) {
+            return 0;
+        }
+        return get(type) / numConsumers;
     }
 }

@@ -17,7 +17,7 @@ public abstract class Cell {
     }
 
     public void setPosition(Position position) {
-        return position;
+        this.position = position;
     }
 
     public void update() {
