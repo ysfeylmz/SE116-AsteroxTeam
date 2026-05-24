@@ -7,21 +7,21 @@ public abstract class Cell {
     protected Position position;
 
     public Cell(Position position) {
-        // TODO: implement
+        this.position=position;
     }
 
     public abstract char getSymbol();
 
     public Position getPosition() {
-        // TODO: implement
-        return null;
+        return position;
     }
 
     public void setPosition(Position position) {
-        // TODO: implement
+        return position;
     }
 
     public void update() {
-        // TODO: implement
+
+
     }
 }

@@ -8,46 +8,53 @@ public final class Position {
     private final int col;
 
     public Position(int row, int col) {
-        // TODO: implement
+
         this.row = row;
         this.col = col;
     }
 
     public int getRow() {
-        // TODO: implement
+
         return row;
     }
 
     public int getCol() {
-        // TODO: implement
+
         return col;
     }
 
     public int manhattanDistance(Position other) {
-        // TODO: implement
-        return 0;
+        return Math.abs(this.row - other.row) + Math.abs(this.col - other.col);
     }
 
     public double euclideanDistance(Position other) {
-        // TODO: implement
-        return 0.0;
+        int dr = this.row - other.row;
+        int dc = this.col - other.col;
+        return Math.sqrt(dr * dr + dc * dc);
     }
 
     @Override
     public boolean equals(Object o) {
-        // TODO: implement
-        return false;
+        if(this == o ){
+            return true;
+        }
+        if(!(o instanceof Position)) {
+            return false;
+        }
+        Position other = (Position) o;
+
+        return this.row == other.row && this.col == other.col;
     }
 
     @Override
     public int hashCode() {
-        // TODO: implement
+
         return Objects.hash(row, col);
     }
 
     @Override
     public String toString() {
-        // TODO: implement
+
         return "(" + row + "," + col + ")";
     }
 }
