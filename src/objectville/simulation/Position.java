@@ -25,7 +25,9 @@ public final class Position {
 
     public int manhattanDistance(Position other) {
         return Math.abs(this.row - other.row) + Math.abs(this.col - other.col);
+
     }
+
 
     public double euclideanDistance(Position other) {
         int dr = this.row - other.row;
