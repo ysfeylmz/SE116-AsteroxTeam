@@ -4,7 +4,7 @@ import objectville.simulation.Position;
 public abstract class ServiceProvider extends Cell {
 
     public ServiceProvider(Position position) {
-        // TODO:
+
         super(position);
     }
 

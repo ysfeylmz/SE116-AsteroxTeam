@@ -10,7 +10,7 @@ import java.io.IOException;
 public class MapLoader {
 
     public MapLoader() {
-        // TODO: implement
+
     }
 
     public City load(String filePath) throws IOException {

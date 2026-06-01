@@ -7,16 +7,16 @@ public class PoliceStation extends ServiceProvider{
       super(position);
   }@Override
     public char getSymbol(){
-      //TODO:implement
+
         return 'F';
     }@Override
     public ServiceType getServiceType(){
-      //TODO:implement
+
         return ServiceType.SECURITY;
 
     }@Override
     public int getRadius(){
-      //TODO:implement
+
         return RADIUS;
     }
 

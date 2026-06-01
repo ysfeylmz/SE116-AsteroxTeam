@@ -9,14 +9,14 @@ public abstract class UtilityProvider extends Cell implements Connectable {
     public static final int CAPACITY = 100;
 
     public UtilityProvider(Position position) {
-        // TODO: implement
+
         super(position);
     }
 
     public abstract UtilityType getUtilityType();
 
     public int getCapacity() {
-        // TODO: implement
+
         return CAPACITY;
     }
 }
