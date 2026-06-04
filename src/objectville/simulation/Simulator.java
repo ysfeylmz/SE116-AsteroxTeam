@@ -104,10 +104,13 @@ public class Simulator {
 
         while (!frontier.isEmpty() && remaining > 0) {
 
-            frontier.sort((a, b) ->
-                    a.getCol() != b.getCol()
-                            ? a.getCol() - b.getCol()
-                            : a.getRow() - b.getRow());
+            frontier.sort((a, b) -> {
+                int da = a.manhattanDistance(start);
+                int db = b.manhattanDistance(start);
+                if (da != db) return da - db;
+                if (a.getCol() != b.getCol()) return a.getCol() - b.getCol();
+                return a.getRow() - b.getRow();
+            });
 
             List<Position> nextLayer = new ArrayList<>();
 
