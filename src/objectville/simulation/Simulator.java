@@ -14,10 +14,9 @@ import objectville.interfaces.Connectable;
 import objectville.interfaces.ResourceConsumer;
 import objectville.interfaces.ResourceProducer;
 
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 
 public class Simulator {
@@ -46,9 +45,7 @@ public class Simulator {
         currentTick++;
         output.writeTickHeader(currentTick);
 
-        for (Zone zone : city.getZones()) {
-            zone.resetTickInputs();
-        }
+        city.getZones().forEach(zone -> zone.resetTickInputs());
 
         distributeServices();
         distributeUtilities();
@@ -99,54 +96,70 @@ public class Simulator {
         int remaining = provider.getCapacity();
 
         Set<Position> visited = new HashSet<>();
-        Queue<Position> queue = new LinkedList<>();
+        List<Position> frontier = new ArrayList<>();
 
         Position start = provider.getPosition();
         visited.add(start);
-        queue.add(start);
+        frontier.add(start);
 
-        while (!queue.isEmpty() && remaining > 0) {
-            Position pos = queue.poll();
-            Cell cell = city.getCell(pos);
+        while (!frontier.isEmpty() && remaining > 0) {
 
-            if (cell == null) {
-                continue;
-            }
+            frontier.sort((a, b) ->
+                    a.getCol() != b.getCol()
+                            ? a.getCol() - b.getCol()
+                            : a.getRow() - b.getRow());
 
-            if (cell instanceof Zone) {
-                Zone zone = (Zone) cell;
+            List<Position> nextLayer = new ArrayList<>();
 
-                int unmet = zone.getUtilityDemand(type)
-                        - zone.getUtilityReceived(type);
+            for (Position pos : frontier) {
 
-                int give = Math.min(unmet, remaining);
+                if (remaining <= 0) {
+                    break;
+                }
 
-                if (give > 0) {
-                    zone.receiveUtility(type, give);
-                    output.writeUtilityReceived(zone, type, give);
-                    remaining -= give;
+                Cell cell = city.getCell(pos);
+
+                if (cell == null) {
+                    continue;
+                }
+
+                if (cell instanceof Zone) {
+                    Zone zone = (Zone) cell;
+
+                    int unmet = zone.getUtilityDemand(type)
+                            - zone.getUtilityReceived(type);
+
+                    int give = Math.min(unmet, remaining);
+
+                    if (give > 0) {
+                        zone.receiveUtility(type, give);
+                        output.writeUtilityReceived(zone, type, give);
+                        remaining -= give;
+                    }
+                }
+
+                if (cell instanceof Connectable) {
+                    for (int k = 0; k < DR.length; k++) {
+                        int nr = pos.getRow() + DR[k];
+                        int nc = pos.getCol() + DC[k];
+
+                        Position next = new Position(nr, nc);
+
+                        if (visited.contains(next)) {
+                            continue;
+                        }
+
+                        Cell neighbour = city.getCell(nr, nc);
+
+                        if (neighbour instanceof Connectable) {
+                            visited.add(next);
+                            nextLayer.add(next);
+                        }
+                    }
                 }
             }
 
-            if (cell instanceof Connectable) {
-                for (int k = 0; k < DR.length; k++) {
-                    int nr = pos.getRow() + DR[k];
-                    int nc = pos.getCol() + DC[k];
-
-                    Position next = new Position(nr, nc);
-
-                    if (visited.contains(next)) {
-                        continue;
-                    }
-
-                    Cell neighbour = city.getCell(nr, nc);
-
-                    if (neighbour instanceof Connectable) {
-                        visited.add(next);
-                        queue.add(next);
-                    }
-                }
-            }
+            frontier = nextLayer;
         }
     }
 
@@ -189,6 +202,7 @@ public class Simulator {
 
         for (Zone zone : zones) {
             if (zone instanceof Housing) {
+
                 if (lifestyleShare > 0) {
                     ((ResourceConsumer) zone).receive(
                             ResourceType.LIFESTYLE,
@@ -203,6 +217,7 @@ public class Simulator {
                 }
 
             } else if (zone instanceof Industrial) {
+
                 if (populationShare > 0) {
                     ((ResourceConsumer) zone).receive(
                             ResourceType.POPULATION,
@@ -217,6 +232,7 @@ public class Simulator {
                 }
 
             } else if (zone instanceof Commercial) {
+
                 if (populationShare > 0) {
                     ((ResourceConsumer) zone).receive(
                             ResourceType.POPULATION,
@@ -273,12 +289,7 @@ public class Simulator {
             if (produced != null) {
                 amount = ((ResourceProducer) zone).produce(produced);
 
-                output.writeProduction(
-                        zone,
-                        produced,
-                        amount
-                );
-
+                output.writeProduction(zone, produced, amount);
                 pool.add(produced, amount);
             }
 
