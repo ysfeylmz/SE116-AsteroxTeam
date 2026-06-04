@@ -16,12 +16,16 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
         super(position);
         this.populationReceived = 0;
         this.lastOutput = 0;
-
     }
 
     @Override
     public char getSymbol() {
         return 'I';
+    }
+
+    @Override
+    public boolean usesService(ServiceType type) {
+        return type == ServiceType.SECURITY;
     }
 
     @Override
@@ -34,31 +38,20 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
             return;
         }
 
-        boolean hasSecurity = hasService(ServiceType.SECURITY);
+        int desired = 1;
 
-        if (level == 0) {
+        if (hasService(ServiceType.SECURITY)) {
+            desired = 2;
+
             if (populationReceived > 0) {
-                setLevel(1);
+                desired = 3;
             }
         }
-        else if (level == 1) {
-            if (populationReceived == 0) {
-                setLevel(0);
-            } else if (hasSecurity) {
-                setLevel(2);
-            }
-        }
-        else if (level == 2) {
-            if (!hasSecurity || populationReceived == 0) {
-                setLevel(1);
-            } else if (populationReceived > 0) {
-                setLevel(3);
-            }
-        }
-        else if (level == 3) {
-            if (!hasSecurity || populationReceived == 0) {
-                setLevel(2);
-            }
+
+        if (level < desired) {
+            setLevel(level + 1);
+        } else if (level > desired) {
+            setLevel(level - 1);
         }
     }
 
@@ -81,10 +74,15 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
 
         int output = 0;
 
-        if (level == 0) output = 0;
-        else if (level == 1) output = m;
-        else if (level == 2) output = 2 * m;
-        else if (level == 3) output = (2 * m) + populationReceived;
+        if (level == 0) {
+            output = 0;
+        } else if (level == 1) {
+            output = m;
+        } else if (level == 2) {
+            output = 2 * m;
+        } else if (level == 3) {
+            output = (2 * m) + populationReceived;
+        }
 
         this.lastOutput = output;
         return output;
@@ -92,7 +90,6 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int demand(ResourceType type) {
-
         return 0;
     }
 
@@ -101,7 +98,9 @@ public class Industrial extends Zone implements ResourceProducer, ResourceConsum
         if (type == ResourceType.POPULATION) {
             this.populationReceived += amount;
         }
-    }@Override
+    }
+
+    @Override
     public void resetTickInputs() {
         super.resetTickInputs();
         this.populationReceived = 0;

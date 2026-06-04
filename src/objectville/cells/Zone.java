@@ -56,6 +56,8 @@ public abstract class Zone extends Cell implements Connectable {
         return servicesReceived.getOrDefault(type, false);
     }
 
+
+    public abstract boolean usesService(ServiceType type);
     public abstract void recomputeLevel();
 
     public abstract int getUtilityDemand(UtilityType type);

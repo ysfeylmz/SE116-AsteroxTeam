@@ -24,6 +24,13 @@ public class Housing extends Zone implements ResourceProducer, ResourceConsumer 
     }
 
     @Override
+    public boolean usesService(ServiceType type) {
+        return type == ServiceType.SECURITY
+                || type == ServiceType.HEALTH
+                || type == ServiceType.EDUCATION;
+    }
+
+    @Override
     public void recomputeLevel() {
         int m = Math.min(getUtilityReceived(UtilityType.ELECTRICITY),
                 Math.min(getUtilityReceived(UtilityType.WATER), getUtilityReceived(UtilityType.INTERNET)));
@@ -100,9 +107,10 @@ public class Housing extends Zone implements ResourceProducer, ResourceConsumer 
             this.lifestyleReceived += amount;
         }
     }
+
     @Override
     public void resetTickInputs() {
         super.resetTickInputs();
         this.lifestyleReceived = 0;
-}
+    }
 }
