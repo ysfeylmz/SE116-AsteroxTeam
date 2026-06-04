@@ -1,4 +1,5 @@
 package objectville.simulation;
+
 import objectville.cells.Cell;
 import objectville.cells.Commercial;
 import objectville.cells.Housing;
@@ -12,19 +13,23 @@ import objectville.enums.UtilityType;
 import objectville.interfaces.Connectable;
 import objectville.interfaces.ResourceConsumer;
 import objectville.interfaces.ResourceProducer;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+
 public class Simulator {
-    private static final int[] DR = {-1, -1, -1, 0, 0, 1, 1, 1};
-    private static final int[] DC = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+    private static final int[] DR = {-1, 1, 0, 0};
+    private static final int[] DC = {0, 0, -1, 1};
+
     private final City city;
     private final OutputWriter output;
     private int currentTick;
-    private Set<Zone> servedZones = new HashSet<>();
     private int[] previousLevels = new int[0];
+
     public Simulator(City city, OutputWriter output) {
         this.city = city;
         this.output = output;
@@ -47,9 +52,11 @@ public class Simulator {
 
         distributeServices();
         distributeUtilities();
+
         if (currentTick > 1) {
             distributeResources();
         }
+
         updateZones();
         accumulateProduction();
     }
@@ -58,19 +65,27 @@ public class Simulator {
         for (ServiceProvider provider : city.getServiceProviders()) {
             Position center = provider.getPosition();
             int radius = provider.getRadius();
+
             for (Zone zone : city.getZones()) {
                 if (center.euclideanDistance(zone.getPosition()) <= radius) {
                     zone.receiveService(provider.getServiceType());
-                    output.writeServiceReceived(zone, provider.getServiceType());
+
+                    if (zone.usesService(provider.getServiceType())) {
+                        output.writeServiceReceived(zone, provider.getServiceType());
+                    }
                 }
             }
         }
     }
 
     protected void distributeUtilities() {
-        UtilityType[] order = {UtilityType.INTERNET, UtilityType.WATER, UtilityType.ELECTRICITY};
+        UtilityType[] order = {
+                UtilityType.INTERNET,
+                UtilityType.WATER,
+                UtilityType.ELECTRICITY
+        };
+
         for (UtilityType type : order) {
-            servedZones = new HashSet<>();
             for (UtilityProvider provider : city.getUtilityProviders()) {
                 if (provider.getUtilityType() == type) {
                     bfsDistribute(provider);
@@ -85,6 +100,7 @@ public class Simulator {
 
         Set<Position> visited = new HashSet<>();
         Queue<Position> queue = new LinkedList<>();
+
         Position start = provider.getPosition();
         visited.add(start);
         queue.add(start);
@@ -92,31 +108,39 @@ public class Simulator {
         while (!queue.isEmpty() && remaining > 0) {
             Position pos = queue.poll();
             Cell cell = city.getCell(pos);
+
             if (cell == null) {
                 continue;
             }
 
-            if (cell instanceof Zone && !servedZones.contains(cell)) {
+            if (cell instanceof Zone) {
                 Zone zone = (Zone) cell;
-                int demand = zone.getUtilityDemand(type);
-                int give = Math.min(demand, remaining);
+
+                int unmet = zone.getUtilityDemand(type)
+                        - zone.getUtilityReceived(type);
+
+                int give = Math.min(unmet, remaining);
+
                 if (give > 0) {
                     zone.receiveUtility(type, give);
-                    servedZones.add(zone);
                     output.writeUtilityReceived(zone, type, give);
                     remaining -= give;
                 }
             }
 
             if (cell instanceof Connectable) {
-                for (int k = 0; k < 8; k++) {
+                for (int k = 0; k < DR.length; k++) {
                     int nr = pos.getRow() + DR[k];
                     int nc = pos.getCol() + DC[k];
+
                     Position next = new Position(nr, nc);
+
                     if (visited.contains(next)) {
                         continue;
                     }
+
                     Cell neighbour = city.getCell(nr, nc);
+
                     if (neighbour instanceof Connectable) {
                         visited.add(next);
                         queue.add(next);
@@ -133,41 +157,90 @@ public class Simulator {
         int populationConsumers = 0;
         int goodsConsumers = 0;
         int lifestyleConsumers = 0;
+
         for (Zone zone : zones) {
             if (zone instanceof Industrial || zone instanceof Commercial) {
                 populationConsumers++;
             }
+
             if (zone instanceof Commercial) {
                 goodsConsumers++;
             }
+
             if (zone instanceof Housing) {
                 lifestyleConsumers++;
             }
         }
 
-        int populationShare = pool.sharePerConsumer(ResourceType.POPULATION, populationConsumers);
-        int goodsShare = pool.sharePerConsumer(ResourceType.GOODS, goodsConsumers);
-        int lifestyleShare = pool.sharePerConsumer(ResourceType.LIFESTYLE, lifestyleConsumers);
+        int populationShare = pool.sharePerConsumer(
+                ResourceType.POPULATION,
+                populationConsumers
+        );
+
+        int goodsShare = pool.sharePerConsumer(
+                ResourceType.GOODS,
+                goodsConsumers
+        );
+
+        int lifestyleShare = pool.sharePerConsumer(
+                ResourceType.LIFESTYLE,
+                lifestyleConsumers
+        );
 
         for (Zone zone : zones) {
             if (zone instanceof Housing) {
                 if (lifestyleShare > 0) {
-                    ((ResourceConsumer) zone).receive(ResourceType.LIFESTYLE, lifestyleShare);
-                    output.writeResourceReceived(zone, ResourceType.LIFESTYLE, lifestyleShare);
+                    ((ResourceConsumer) zone).receive(
+                            ResourceType.LIFESTYLE,
+                            lifestyleShare
+                    );
+
+                    output.writeResourceReceived(
+                            zone,
+                            ResourceType.LIFESTYLE,
+                            lifestyleShare
+                    );
                 }
+
             } else if (zone instanceof Industrial) {
                 if (populationShare > 0) {
-                    ((ResourceConsumer) zone).receive(ResourceType.POPULATION, populationShare);
-                    output.writeResourceReceived(zone, ResourceType.POPULATION, populationShare);
+                    ((ResourceConsumer) zone).receive(
+                            ResourceType.POPULATION,
+                            populationShare
+                    );
+
+                    output.writeResourceReceived(
+                            zone,
+                            ResourceType.POPULATION,
+                            populationShare
+                    );
                 }
+
             } else if (zone instanceof Commercial) {
                 if (populationShare > 0) {
-                    ((ResourceConsumer) zone).receive(ResourceType.POPULATION, populationShare);
-                    output.writeResourceReceived(zone, ResourceType.POPULATION, populationShare);
+                    ((ResourceConsumer) zone).receive(
+                            ResourceType.POPULATION,
+                            populationShare
+                    );
+
+                    output.writeResourceReceived(
+                            zone,
+                            ResourceType.POPULATION,
+                            populationShare
+                    );
                 }
+
                 if (goodsShare > 0) {
-                    ((ResourceConsumer) zone).receive(ResourceType.GOODS, goodsShare);
-                    output.writeResourceReceived(zone, ResourceType.GOODS, goodsShare);
+                    ((ResourceConsumer) zone).receive(
+                            ResourceType.GOODS,
+                            goodsShare
+                    );
+
+                    output.writeResourceReceived(
+                            zone,
+                            ResourceType.GOODS,
+                            goodsShare
+                    );
                 }
             }
         }
@@ -177,7 +250,9 @@ public class Simulator {
 
     protected void updateZones() {
         List<Zone> zones = city.getZones();
+
         previousLevels = new int[zones.size()];
+
         for (int i = 0; i < zones.size(); i++) {
             Zone zone = zones.get(i);
             previousLevels[i] = zone.getLevel();
@@ -188,18 +263,28 @@ public class Simulator {
     protected void accumulateProduction() {
         ResourcePool pool = city.getResourcePool();
         List<Zone> zones = city.getZones();
+
         for (int i = 0; i < zones.size(); i++) {
             Zone zone = zones.get(i);
+
             ResourceType produced = producedResource(zone);
             int amount = 0;
+
             if (produced != null) {
                 amount = ((ResourceProducer) zone).produce(produced);
-                output.writeProduction(zone, produced, amount);
+
+                output.writeProduction(
+                        zone,
+                        produced,
+                        amount
+                );
+
                 pool.add(produced, amount);
             }
 
             int oldLevel = previousLevels[i];
             int newLevel = zone.getLevel();
+
             if (newLevel > oldLevel) {
                 output.writeLevelUp(zone, oldLevel, newLevel);
             } else if (newLevel < oldLevel) {
@@ -216,17 +301,15 @@ public class Simulator {
         } else if (zone instanceof Commercial) {
             return ResourceType.LIFESTYLE;
         }
+
         return null;
     }
 
-
     public int getCurrentTick() {
-
         return currentTick;
     }
 
     public City getCity() {
-
         return city;
     }
 }

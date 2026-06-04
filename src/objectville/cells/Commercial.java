@@ -26,6 +26,11 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
     }
 
     @Override
+    public boolean usesService(ServiceType type) {
+        return type == ServiceType.SECURITY;
+    }
+
+    @Override
     public void recomputeLevel() {
         int m = Math.min(getUtilityReceived(UtilityType.ELECTRICITY),
                 Math.min(getUtilityReceived(UtilityType.WATER), getUtilityReceived(UtilityType.INTERNET)));
@@ -36,32 +41,20 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
             return;
         }
 
-        boolean hasSecurity = hasService(ServiceType.SECURITY);
-        boolean hasResources = populationReceived > 0 && goodsReceived > 0;
+        int desired = 1;
 
-        if (level == 0) {
-            if (hasResources) {
-                setLevel(1);
+        if (hasService(ServiceType.SECURITY)) {
+            desired = 2;
+
+            if (populationReceived > 0 && goodsReceived > 0) {
+                desired = 3;
             }
         }
-        else if (level == 1) {
-            if (!hasResources) {
-                setLevel(0);
-            } else if (hasSecurity) {
-                setLevel(2);
-            }
-        }
-        else if (level == 2) {
-            if (!hasSecurity || !hasResources) {
-                setLevel(1);
-            } else if (populationReceived > 1 && goodsReceived > 1) {
-                setLevel(3);
-            }
-        }
-        else if (level == 3) {
-            if (!hasSecurity || !(populationReceived > 1 && goodsReceived > 1)) {
-                setLevel(2);
-            }
+
+        if (level < desired) {
+            setLevel(level + 1);
+        } else if (level > desired) {
+            setLevel(level - 1);
         }
     }
 
@@ -97,7 +90,6 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
 
     @Override
     public int demand(ResourceType type) {
-
         if (type == ResourceType.POPULATION || type == ResourceType.GOODS) {
             return 1;
         }
