@@ -41,20 +41,14 @@ public class Commercial extends Zone implements ResourceProducer, ResourceConsum
             return;
         }
 
-        int desired = 0;
+        int desired = 1;
 
-        if (populationReceived > 0 && goodsReceived > 0){
-            desired = 1;
+        if (hasService(ServiceType.SECURITY)){
+            desired = 2;
 
-            if (hasService(ServiceType.SECURITY)){
-                desired = 2;
-
-                if (populationReceived > 0 && goodsReceived > 0){
-                    desired = 3;
-                }
-
+            if (populationReceived > 0 && goodsReceived > 0){
+                desired = 3;
             }
-
         }
 
 
